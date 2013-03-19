@@ -34,7 +34,7 @@ int set_led(int socket, int status) {
 
 int measure_power(int socket) {
 	// TODO
-	Serial.println("measure_power not implemented. ");
+	Serial.print("measure_power not implemented. ");
 	Serial.println(socket);
 	return 0;
 }

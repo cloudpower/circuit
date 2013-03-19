@@ -5,8 +5,6 @@ const int SET_MODE_LED = 1;
 
 
 void handle_input_line(char * line) {
-	Serial.println("handle_input_line");
-
 	if(String(line) == String("report")) {
 		_handle_report();
 
@@ -19,15 +17,38 @@ void handle_input_line(char * line) {
 }
 
 void _handle_report() {
-	// TODO
-	Serial.println("_handle_report is not yet implemented");
+	Serial.print("{");
+
+	for(int i = 0; i < NUM_PORTS; i++) {
+		Serial.print(i);
+		Serial.print(":{");
+
+		Serial.print("\"state\":");
+		Serial.print(get_relay(i));
+		Serial.print(",");
+
+		Serial.print("\"power\":");
+		Serial.print(measure_power(i));
+		Serial.print(",");
+
+		Serial.print("\"led\":");
+		Serial.print(get_led(i));
+
+		Serial.print("}");
+		if(i < NUM_PORTS-1) {
+			Serial.print(",");
+		}
+	}
+
+	Serial.print(":{");
+	Serial.print("\"success\":true");
+	Serial.print("}");
+
+	Serial.println("}");
 }
 
 int _handle_set(char * pairs, int mode) {
-	Serial.println("_handle_set");
-	//Serial.println(pairs);
 	int tok_end = 0;
-
 	for(int i = 0; i < IN_BUFF_LEN; i++) {
 		if(pairs[tok_end] == 0) {
 			_handle_pair(pairs, mode);
@@ -41,13 +62,10 @@ int _handle_set(char * pairs, int mode) {
 			tok_end++;
 		}
 	}
-
 	return 0;
 }
 
 int _handle_pair(char * pair, int mode) {
-	Serial.println("_handle_pair");
-	//Serial.println(pair);
 	int socket;
 	int state;
 	for(int i = 0; i < strlen(pair); i++) {
@@ -66,6 +84,5 @@ int _handle_pair(char * pair, int mode) {
 			}
 		}
 	}
-	
 	return 0;
 }
