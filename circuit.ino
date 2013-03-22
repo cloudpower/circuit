@@ -1,11 +1,11 @@
 
 
-const int NUM_PORTS = 2;
+const int NUM_PORTS = 1;
 const int IN_BUFF_LEN = 100;
-
 
 void setup() {
 	Serial.begin(9600);
+        calibrate_voltage();
 }
 
 void loop() {
@@ -15,6 +15,12 @@ void loop() {
 	char c;
 
 	for(;;) {
+
+		// Poll the current sense resistor of each socket in the down time
+        for(int i=0;i<NUM_PORTS;i++){
+            poll_current_sense(i);
+        }
+
 		// Add new characters to a buffer
 		if(Serial.available()) {
 			c = Serial.read();
