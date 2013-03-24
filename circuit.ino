@@ -1,11 +1,14 @@
 
 
 const int NUM_PORTS = 1;
+const int NUM_LEDS = 1;
 const int IN_BUFF_LEN = 100;
 
 void setup() {
 	Serial.begin(9600);
         calibrate_voltage();
+        setup_relay_output();
+        setup_led_output();
 }
 
 void loop() {
@@ -14,11 +17,13 @@ void loop() {
 	int overflow = 0;
 	char c;
 
-	for(;;) {
+	for(;;) {       
 
-		// Poll the current sense resistor of each socket in the down time
+        // Poll the current sense resistor of each socket in the down time
+        // Also poll for the switch button 
         for(int i=0;i<NUM_PORTS;i++){
             poll_current_sense(i);
+            poll_relay_button(i);
         }
 
 		// Add new characters to a buffer

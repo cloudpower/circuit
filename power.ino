@@ -7,35 +7,75 @@ unsigned long accumulator[NUM_PORTS];
 unsigned int step_num[NUM_PORTS];
 float voltage_correction_factor = 1.0;
 
+const int relay_control_pin[NUM_PORTS] = {12};
+const int relay_led_pin[NUM_PORTS] = {11};
+const int led_control_pin[NUM_LEDS] = {10};
+const int socket_button_pin[NUM_PORTS] = {9};
+
+byte relay_status[NUM_PORTS];
+byte led_status[NUM_PORTS];
+
+long last_debounce_time[NUM_PORTS] = {0};  // the last time the output pin was toggled
+int last_button_state[NUM_PORTS] = {LOW};
+const long debounceDelay = 50; 
+
+void setup_relay_output() {
+       for (int i=0; i<NUM_PORTS; i++) {
+              pinMode(relay_control_pin[i], OUTPUT);
+              pinMode(socket_button_pin[i], INPUT);
+              digitalWrite(relay_control_pin[i], LOW);
+              relay_status[i] = 0; 
+       } 
+}
+void setup_led_output() {
+       for (int i=0; i<NUM_PORTS; i++) {
+              pinMode(led_control_pin[i], OUTPUT);
+              digitalWrite(led_control_pin[i], HIGH);
+              led_status[i] = 0; 
+       }  
+}
+
 int get_relay(int socket) {
-	// TODO
-	Serial.print("get_relay not implemented. ");
-	Serial.println(socket);
-	return 0;
+        if (socket >= NUM_PORTS) {
+              return -1;
+        } 
+	return relay_status[socket];
 }
 
 int set_relay(int socket, int status) {
-	// TODO
-	Serial.print("set_relay not implemented. ");
-	Serial.print(socket);
-	Serial.print(" ");
-	Serial.println(status);
+        if (socket >= NUM_PORTS) {
+              return -1;
+        }
+        if (status == 0) {
+             digitalWrite(relay_control_pin[socket],LOW);
+             digitalWrite(relay_led_pin[socket],HIGH);
+             relay_status[socket] = 0; 
+        } else {
+             digitalWrite(relay_control_pin[socket],HIGH);
+             digitalWrite(relay_led_pin[socket],LOW);
+             relay_status[socket] = 1;
+        }
 	return 0;
 }
 
-int get_led(int socket) {
-	// TODO
-	Serial.print("get_led not implemented. ");
-	Serial.println(socket);
-	return 0;
+int get_led(int led) {
+	if (led >= NUM_LEDS) {
+              return -1;
+        } 
+	return led_status[led];
 }
 
-int set_led(int socket, int status) {
-	// TODO
-	Serial.print("set_led not implemented. ");
-	Serial.print(socket);
-	Serial.print(" ");
-	Serial.println(status);
+int set_led(int led, int status) {
+	if (led >= NUM_LEDS) {
+              return -1;
+        }
+        if (status == 0) {
+             digitalWrite(led_control_pin[led],LOW);
+             led_status[led] = 0; 
+        } else {
+             digitalWrite(led_control_pin[led],HIGH);
+             led_status[led] = 1;
+        }
 	return 0;
 }
 
@@ -66,4 +106,19 @@ void poll_current_sense(int socket) {
                return;
            }
     }           
+}
+
+void poll_relay_button(int socket) {
+      int state = digitalRead(socket_button_pin[socket]);
+      if (state != last_button_state[socket]) {
+         last_debounce_time[socket] = millis();  
+      }
+      if (millis() - last_debounce_time[socket] > debounceDelay) {
+          if (get_relay(socket) == 1) {
+              set_relay(socket,0);
+          } else {
+              set_relay(socket,1);
+          }        
+      }
+      last_button_state[socket] = state;
 }

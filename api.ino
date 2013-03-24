@@ -18,10 +18,11 @@ void handle_input_line(char * line) {
 
 void _handle_report() {
 	Serial.print("{");
-
+	Serial.print("\"success\":true,");
 	for(int i = 0; i < NUM_PORTS; i++) {
+                Serial.print("\"");
 		Serial.print(i);
-		Serial.print(":{");
+		Serial.print("\":{");
 
 		Serial.print("\"state\":");
 		Serial.print(get_relay(i));
@@ -39,10 +40,6 @@ void _handle_report() {
 			Serial.print(",");
 		}
 	}
-
-	Serial.print(":{");
-	Serial.print("\"success\":true");
-	Serial.print("}");
 
 	Serial.println("}");
 }
