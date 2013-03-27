@@ -32,7 +32,7 @@ void setup_relay_output() {
 void setup_led_output() {
        for (int i=0; i<NUM_PORTS; i++) {
               pinMode(led_control_pin[i], OUTPUT);
-              digitalWrite(led_control_pin[i], HIGH);
+              digitalWrite(led_control_pin[i], LOW);
               led_status[i] = 0; 
        }  
 }
