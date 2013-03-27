@@ -1,16 +1,16 @@
 
 const float current_sense_coef = 1.0;
-const unsigned int poll_length = 256;
+const unsigned int poll_length = 5;
 const int analog_current_sense_pin = A0;
 
 unsigned long accumulator[NUM_PORTS];
 unsigned int step_num[NUM_PORTS];
-float voltage_correction_factor = 1.0;
+float power_correction_factor = -20;
 
-const int relay_control_pin[NUM_PORTS] = {12};
-const int relay_led_pin[NUM_PORTS] = {11};
+const int relay_control_pin[NUM_PORTS] = {5};
+const int relay_led_pin[NUM_PORTS] = {3};
 const int led_control_pin[NUM_LEDS] = {10};
-const int socket_button_pin[NUM_PORTS] = {9};
+const int socket_button_pin[NUM_PORTS] = {4};
 
 byte relay_status[NUM_PORTS];
 byte led_status[NUM_PORTS];
@@ -22,8 +22,10 @@ const long debounceDelay = 50;
 void setup_relay_output() {
        for (int i=0; i<NUM_PORTS; i++) {
               pinMode(relay_control_pin[i], OUTPUT);
+              pinMode(relay_led_pin[i],OUTPUT);
               pinMode(socket_button_pin[i], INPUT);
               digitalWrite(relay_control_pin[i], LOW);
+              digitalWrite(relay_led_pin[i],LOW);
               relay_status[i] = 0; 
        } 
 }
@@ -48,11 +50,11 @@ int set_relay(int socket, int status) {
         }
         if (status == 0) {
              digitalWrite(relay_control_pin[socket],LOW);
-             digitalWrite(relay_led_pin[socket],HIGH);
+             digitalWrite(relay_led_pin[socket],LOW);
              relay_status[socket] = 0; 
         } else {
              digitalWrite(relay_control_pin[socket],HIGH);
-             digitalWrite(relay_led_pin[socket],LOW);
+             digitalWrite(relay_led_pin[socket],HIGH);
              relay_status[socket] = 1;
         }
 	return 0;
@@ -81,15 +83,16 @@ int set_led(int led, int status) {
 
 float measure_power(int socket) {
     float power;
-    power = accumulator[socket]/step_num[socket];	
+    power = accumulator[socket]/step_num[socket];
+    power = 512 - power; //move down half
+    power = power*power_correction_factor;	
     accumulator[socket] = 0; //reset the accumulator
     step_num[socket] = 0;
-	return power;
+    return power;
 }
 
 void calibrate_voltage() {
-    //TODO: get voltage from analog pin 1 and set voltage correction gain
-    voltage_correction_factor = 1.0;        
+    //TODO: get voltage from analog pin 1 and set voltage correction gain        
 }
 
 void poll_current_sense(int socket) {
@@ -100,6 +103,7 @@ void poll_current_sense(int socket) {
            if (step_num[socket] != 65536) {
                accumulator[socket] += analogRead(analog_current_sense_pin); //read new analog value
                step_num[socket] += 1;
+               delay(2);
            } else { //accumulator has reached step limit, reset
                step_num[socket] = 0;
                accumulator[socket]=0;
@@ -110,15 +114,13 @@ void poll_current_sense(int socket) {
 
 void poll_relay_button(int socket) {
       int state = digitalRead(socket_button_pin[socket]);
-      if (state != last_button_state[socket]) {
-         last_debounce_time[socket] = millis();  
-      }
-      if (millis() - last_debounce_time[socket] > debounceDelay) {
-          if (get_relay(socket) == 1) {
+      if (state == HIGH && last_button_state[socket] == LOW && millis() - last_debounce_time[socket] > debounceDelay) {
+        if (relay_status[socket] == 1) {
               set_relay(socket,0);
-          } else {
+        } else {
               set_relay(socket,1);
-          }        
+        }   
+        last_debounce_time[socket] = millis();  
       }
       last_button_state[socket] = state;
 }
