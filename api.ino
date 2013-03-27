@@ -46,25 +46,36 @@ void _handle_report() {
 
 int _handle_set(char * pairs, int mode) {
 	int tok_end = 0;
+	int status = 0;
+	
 	for(int i = 0; i < IN_BUFF_LEN; i++) {
 		if(pairs[tok_end] == 0) {
-			_handle_pair(pairs, mode);
+			status += _handle_pair(pairs, mode);
 			break;
 		} else if(pairs[tok_end] == ' ') {
 			pairs[tok_end] = 0;
-			_handle_pair(pairs, mode);
+			status += _handle_pair(pairs, mode);
 			pairs = pairs + tok_end+1;
 			tok_end = 0;
 		} else {
 			tok_end++;
 		}
 	}
+	
+	if(status != 0) {
+		Serial.print("{\"success\":false,\"message\":null}\n");
+		return 1;
+	}
+
+	Serial.print("{\"success\":true,\"message\":null}\n");
 	return 0;
 }
 
 int _handle_pair(char * pair, int mode) {
 	int socket;
 	int state;
+	int status = 0;
+	
 	for(int i = 0; i < strlen(pair); i++) {
 		if(pair[i] == ':') {
 			pair[i] = 0;
@@ -73,13 +84,18 @@ int _handle_pair(char * pair, int mode) {
 
 			switch(mode) {
 			case SET_MODE_RELAY:
-				set_relay(socket, state);
+				status += set_relay(socket, state);
 				break;
 			case SET_MODE_LED:
-				set_led(socket, state);
+				status += set_led(socket, state);
 				break;
 			}
 		}
 	}
+	
+	if(status != 0) {
+		return 1;
+	}
+	
 	return 0;
 }
