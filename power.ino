@@ -1,16 +1,17 @@
 
 const float current_sense_coef = 1.0;
 const unsigned int poll_length = 5;
-const int analog_current_sense_pin = A0;
 
 unsigned long accumulator[NUM_PORTS];
 unsigned int step_num[NUM_PORTS];
 float power_correction_factor = -20;
 
-const int relay_control_pin[NUM_PORTS] = {5};
-const int relay_led_pin[NUM_PORTS] = {3};
-const int led_control_pin[NUM_LEDS] = {10};
-const int socket_button_pin[NUM_PORTS] = {4};
+const int analog_current_sense_pin[NUM_PORTS] = {A0,A1};
+const int relay_control_pin[NUM_PORTS] = {2,5};
+const int relay_led_pin[NUM_PORTS] = {3,6};
+const int socket_button_pin[NUM_PORTS] = {4,7};
+const int led_control_pin[NUM_LEDS] = {8,9};
+
 
 byte relay_status[NUM_PORTS];
 byte led_status[NUM_PORTS];
@@ -101,7 +102,7 @@ void poll_current_sense(int socket) {
     for (int i=0; i<poll_length; i++) //poll the socket for enough time to capture a few periods
     {
            if (step_num[socket] != 65536) {
-               accumulator[socket] += analogRead(analog_current_sense_pin); //read new analog value
+               accumulator[socket] += analogRead(analog_current_sense_pin[socket]); //read new analog value
                step_num[socket] += 1;
                delay(2);
            } else { //accumulator has reached step limit, reset
